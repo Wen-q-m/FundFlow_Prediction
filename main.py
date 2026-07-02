@@ -3,15 +3,14 @@ import numpy as np
 import lightgbm as lgb
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import matplotlib.pyplot as plt
-import os
 import warnings
 warnings.filterwarnings('ignore')
 
 # ==========================================
-# 第一步：读取所有数据（修复为读取真实 Excel）
+# 第一步：读取所有 CSV 原文件（修改为读取 CSV）
 # ==========================================
 print("正在加载数据...")
-df_balance = pd.read_excel('user_balance_table.xlsx')  # 核心交易数据
+df_balance = pd.read_csv('user_balance_table.csv')     # 核心交易数据
 df_shibor = pd.read_csv('mfd_bank_shibor.csv')         # 银行间拆借利率
 df_yield = pd.read_csv('mfd_day_share_interest.csv')   # 货币基金万份/七日年化
 
@@ -35,7 +34,7 @@ if not df_yield.empty:
     daily_data = pd.merge(daily_data, df_yield, left_on='report_date', right_on='mfd_date', how='left')
     daily_data = daily_data.drop('mfd_date', axis=1)
 
-# 修复报错：使用新版的 .ffill()
+# 修复空值
 daily_data = daily_data.ffill().fillna(0)
 
 # ==========================================
@@ -102,8 +101,7 @@ plt.tight_layout()
 plt.show()
 
 # ==========================================
-# ==========================================
-# 第六步：生成符合官方标准的提交文件（无表头纯数据）
+# 第六步：生成符合官方标准的提交文件（无表头，金额分）
 # ==========================================
 result_df = pd.DataFrame({
     'report_date': test_df['report_date'].dt.strftime('%Y%m%d'),
@@ -111,6 +109,7 @@ result_df = pd.DataFrame({
     'redeem': np.round(pred_r * 100).astype(int)
 })
 
-# 🔴 重点检查这一行最后的 header=False
-result_df.to_csv('tc_comp_predict_table.csv', index=False, header=False) 
+# 核心修改：header=False
+result_df.to_csv('tc_comp_predict_table.csv', index=False, header=False)
 print("\n✅ 已生成符合官方要求的提交文件: tc_comp_predict_table.csv")
+print("   （无表头纯数据格式，金额精确到分，请用记事本打开验证！）")
